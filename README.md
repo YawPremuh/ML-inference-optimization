@@ -75,13 +75,20 @@ baseball 3.25%
 * TorchVision
 * Pillow
 * Git / GitHub
+* FastAPI
+* Uvicorn
 
-Additional technologies will be introduced as the project develops, including ONNX Runtime, FastAPI, Locust, and Docker.
+
+Additional technologies will be introduced as the project develops, including ONNX Runtime, Locust, and Docker.
 
 ## Project file structure
 
 ```text
 ML_inf_and_serving/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── model.py
 ├── images/
 │   ├── ball.jpg
 │   ├── car.jpeg
