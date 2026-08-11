@@ -25,7 +25,7 @@ This project will compare:
 * [x] Preprocess local images for inference
 * [x] Run image classification inference
 * [x] Return top model predictions and confidence scores
-* [ ] Serve the model using FastAPI
+* [x] Serve the model using FastAPI
 * [ ] Export ResNet18 to ONNX
 * [ ] Run inference with ONNX Runtime
 * [ ] Benchmark PyTorch vs ONNX Runtime
