@@ -1,4 +1,3 @@
-# ML-inference-optimization
 # ML Inference Optimization & Serving Platform
 
 This is an ML systems project which was done to explore how inference runtime, hardware, batch size and request load affect the performance when serving a model.
