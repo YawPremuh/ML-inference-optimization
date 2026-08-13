@@ -2,13 +2,14 @@ import torch
 from PIL import Image
 from torchvision.models import resnet18, ResNet18_Weights
 
+#set up ResNet18 as model
 weights = ResNet18_Weights.DEFAULT
 model = resnet18(weights=weights)
 model.eval()
 preprocess = weights.transforms()
 categories = weights.meta["categories"]
 
-
+#function to run inference
 def predict_image(image: Image.Image, top_preds: int = 3):
 
     image = image.convert("RGB")

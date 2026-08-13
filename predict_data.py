@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
     print("Error: \nEnter cmd in this format -> python predict.py <image_path>")
     sys.exit(1)
 
-#load up ResNet18 as our model 
+#set up ResNet18 as our model 
 weights = ResNet18_Weights.DEFAULT #pretrained ResNet18 weights as our weights
 model = resnet18(weights=weights)
 model.eval() 
@@ -18,7 +18,7 @@ image = Image.open(f"{sys.argv[1]}").convert("RGB")
 input_tensor = preprocess(image)
 input_batch = input_tensor.unsqueeze(0)
 
-#run inference
+#run only inference on this model
 with torch.inference_mode():
     output = model(input_batch)
 
