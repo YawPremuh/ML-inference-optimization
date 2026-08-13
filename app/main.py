@@ -7,7 +7,6 @@ from app.model import predict_image
 app = FastAPI(
     title="ML Inference Optimization & Serving Platform",
     description="ResNet18 inference API for ML systems performance experiments.",
-    version="0.1.0",
 )
 
 
@@ -30,7 +29,7 @@ async def predict(file: UploadFile = File(...)):
     if file.content_type is None or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
-            detail="Error: Uploaded an image file."
+            detail="Error: Uploaded file must be an image (eg. image/1.jpg, image/2.jpeg)."
         )
 
     try:
@@ -39,12 +38,12 @@ async def predict(file: UploadFile = File(...)):
         predictions = predict_image(image)
 
         return {
-            "Filename": file.filename,
-            "Predictions": predictions
+            "filename": file.filename,
+            "predictions": predictions
         }
 
     except Exception as error:
         raise HTTPException(
             status_code=400,
-            detail=f"An error occured and image was unable to be processed: {error}"
+            detail=f"Error: Image file could not be processed: {error}"
         )
