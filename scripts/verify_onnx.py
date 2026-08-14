@@ -70,13 +70,13 @@ def main():
     #Convert pytorch tensor ->numpy
     onnx_input = input_batch.numpy()
 
-    # Run onnx runtime
+    #Run onnx runtime
     onnx_output = ort_session.run(
         None,
         {input_name: onnx_input}
     )[0]
 
-    # Convert onnx output -> pytorch tensor
+    #Convert onnx output -> pytorch tensor
     onnx_output_tensor = torch.from_numpy(
         onnx_output[0]
     )
