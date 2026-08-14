@@ -103,7 +103,7 @@ def main():
             f"Confidence: {confidence * 100:.4f}%"
         )
 
-    # Compare raw model outputs
+    #Compare raw model outputs to validate equivalence between the pytorch and onnx runtime
     max_diff = torch.max(
         torch.abs(
             pytorch_output - onnx_output_tensor
