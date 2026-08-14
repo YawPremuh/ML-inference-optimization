@@ -25,9 +25,9 @@ This project will compare:
 * [x] Run image classification inference
 * [x] Return top model predictions and confidence scores
 * [x] Serve the model using FastAPI
-* [ ] Export ResNet18 to ONNX
-* [ ] Run inference with ONNX Runtime
-* [ ] Benchmark PyTorch vs ONNX Runtime
+* [x] Export ResNet18 to ONNX
+* [x] Run inference with ONNX Runtime
+* [x] Benchmark PyTorch vs ONNX Runtime
 * [ ] Test batch sizes 1, 4, and 8
 * [ ] Compare CPU and available hardware acceleration
 * [ ] Measure p50, p95, and p99 latency
@@ -67,7 +67,23 @@ rugby ball 43.78%
 baseball 3.25%
 ```
 
-## Step 2 - 
+## Step 2 - FastAPI 
+
+## Step 3 — ONNX Export and Validation
+
+In this step, I successfully exported the ResNet18 from PyTorch to the ONNX formatand run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions.
+
+```text
+PyTorch ResNet18
+       ↓
+    Export
+       ↓
+     ONNX
+       ↓
+ ONNX Runtime
+       ↓
+Prediction validation
+
 
 ## Technologies/Tools
 
@@ -78,7 +94,7 @@ baseball 3.25%
 * Git / GitHub
 * FastAPI
 * Uvicorn
-
+* ONNX Runtime
 
 Additional technologies will be introduced as the project develops, including ONNX Runtime, Locust, and Docker.
 
@@ -89,12 +105,21 @@ ML_inf_and_serving/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py
-│   ├── model.py
+│   └──model.py
+│
 ├── images/
 │   ├── ball.jpg
 │   ├── car.jpeg
 │   ├── dog.jpg
 │   └── dog2.jpg
+│
+├── models/
+│   └── .gitkeep
+│
+├── scripts/
+│   ├── export_to_onnx.py
+│   └── verify_onnx.py
+│
 ├── predict_data.py
 ├── requirements.txt
 ├── .gitignore

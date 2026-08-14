@@ -8,7 +8,7 @@ if len(sys.argv) != 2:
     print("Error: \nEnter cmd in this format -> python predict.py <image_path>")
     sys.exit(1)
 
-#set up ResNet18 as our model 
+#Load up pretrained ResNet18 as our model 
 weights = ResNet18_Weights.DEFAULT #pretrained ResNet18 weights as our weights
 model = resnet18(weights=weights)
 model.eval() 
