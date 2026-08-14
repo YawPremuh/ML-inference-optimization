@@ -9,21 +9,21 @@ app = FastAPI(
     description="ResNet18 inference API for ML systems performance experiments.",
 )
 
-
+#Return basic API info
 @app.get("/")
 def root():
     return {
         "message": "ML Inference Optimization & Serving Platform"
     }
 
-
-@app.get("/health")
+#Check the status of the model service to see if it is running
+@app.get("/health") 
 def health():
     return {
         "status": "healthy"
     }
 
-
+#Take an image file as input and return the top 3 prediction from the resnet18 model
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     if file.content_type is None or not file.content_type.startswith("image/"):

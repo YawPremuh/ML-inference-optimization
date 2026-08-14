@@ -67,11 +67,53 @@ rugby ball 43.78%
 baseball 3.25%
 ```
 
-## Step 2 - FastAPI 
+## Step 2 — FastAPI Model Serving
+
+The pretrained ResNet18 model is linked to a FastAPI server so that the predictions made can be requested through HTTP instead of running the inference script manually.
+
+### Serving Pipeline
+
+```text
+Image
+  ↓
+POST /predict
+  ↓
+FastAPI
+  ↓
+Image preprocessing
+  ↓
+ResNet18
+  ↓
+Top predictions
+  ↓
+JSON response
+```
+
+Example response:
+
+```json
+{
+  "Filename": "dog_bluejay.jpeg",
+  "Predictions": [
+    {
+      "Class": "Tibetan terrier",
+      "Confidence": 0.5854
+    },
+    {
+      "Class": "Maltese dog",
+      "Confidence": 0.0931
+    },
+    {
+      "Class": "Lhasa",
+      "Confidence": 0.0853
+    }
+  ]
+}
+```
 
 ## Step 3 — ONNX Export and Validation
 
-In this step, I successfully exported the ResNet18 from PyTorch to the ONNX formatand run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions.
+In this step, I successfully exported the same ResNet18 from PyTorch to the ONNX format and run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions and, also to later compare the runtime. And now that step 3 is successful, I ask myself, which inference/execution engine can handle the same workload better than the other? At the end of this experiment/project I should be able to answer that, alongside a question about whether the performance/deployement benefit is worth all this additional complexity from exporting.
 
 ```text
 PyTorch ResNet18
@@ -188,6 +230,6 @@ The predict.py script loads the ResNet18 model, preprocesses the selected image,
 
 The final project will experimentally answer:
 
-> How can ML inference be made faster and more efficient under real request load?
+> How can ML inference be made faster and more efficient under real request load? In other words, given the same trained ML model, how does the system around the model affect performance?
 
 The conclusions to this question will be based on measured benchmark results rather than assumed performance improvements.
