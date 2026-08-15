@@ -28,7 +28,7 @@ This project will compare:
 * [x] Export ResNet18 to ONNX
 * [x] Run inference with ONNX Runtime
 * [x] Benchmark PyTorch vs ONNX Runtime
-* [ ] Test batch sizes 1, 4, and 8
+* [x] Test batch sizes 1, 4, and 8
 * [ ] Compare CPU and available hardware acceleration
 * [ ] Measure p50, p95, and p99 latency
 * [ ] Measure throughput and memory usage

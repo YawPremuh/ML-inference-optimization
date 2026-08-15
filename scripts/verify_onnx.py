@@ -19,26 +19,16 @@ categories = weights.meta["categories"]
 def get_top_preds(output_tensor, top_k=3):
     probs = torch.softmax(output_tensor, dim=0)
 
-    top_probs, top_indxs = torch.topk(
-        probs,
-        top_k
-    )
+    top_probs, top_indxs = torch.topk(probs, top_k)
 
     preds = []
 
-    for probability, index in zip(
-        top_probs,
-        top_indxs
-    ):
-        preds.append(
-            (
-                categories[index.item()],
-                probability.item()
-            )
+    for probability, index in zip(top_probs, top_indxs):
+        preds.append((
+            categories[index.item()], 
+            probability.item())
         )
-
     return preds
-
 
 def main():
 
@@ -54,15 +44,10 @@ def main():
     with torch.inference_mode():
         pytorch_output = pytorch_model(input_batch)[0]
 
-    pytorch_preds = get_top_preds(
-        pytorch_output
-    )
+    pytorch_preds = get_top_preds(pytorch_output)
 
     #Then run onnx runtime inference
-    ort_session = ort.InferenceSession(
-        str(onnx_path),
-        providers=["CPUExecutionProvider"]
-    )
+    ort_session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
 
     #Find onnx model input name
     input_name = ort_session.get_inputs()[0].name
@@ -71,19 +56,12 @@ def main():
     onnx_input = input_batch.numpy()
 
     #Run onnx runtime
-    onnx_output = ort_session.run(
-        None,
-        {input_name: onnx_input}
-    )[0]
+    onnx_output = ort_session.run(None, {input_name: onnx_input})[0]
 
     #Convert onnx output -> pytorch tensor
-    onnx_output_tensor = torch.from_numpy(
-        onnx_output[0]
-    )
+    onnx_output_tensor = torch.from_numpy(onnx_output[0])
 
-    onnx_preds = get_top_preds(
-        onnx_output_tensor
-    )
+    onnx_preds = get_top_preds(onnx_output_tensor)
 
     #Compare the outputs from pytorch and onnx runtime inference
 
@@ -104,11 +82,7 @@ def main():
         )
 
     #Compare raw model outputs to validate equivalence between the pytorch and onnx runtime
-    max_diff = torch.max(
-        torch.abs(
-            pytorch_output - onnx_output_tensor
-        )
-    ).item()
+    max_diff = torch.max(torch.abs(pytorch_output - onnx_output_tensor)).item()
 
     print(
         f"\nMaximum output difference: "
