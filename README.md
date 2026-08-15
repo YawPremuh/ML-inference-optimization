@@ -125,6 +125,30 @@ PyTorch ResNet18
  ONNX Runtime
        ↓
 Prediction validation
+```
+
+## Step 4 — Dynamic Batch Size Support
+
+I updated the ONNX export to support dynamic batch sizes while I kept the image dimensions fixed at 224×224 to make the exported graph and experimental setup simple.
+
+The model was verified with batch sizes:
+
+* `1`
+* `4`
+* `8`
+
+for both PyTorch and ONNX Runtime.
+
+```text
+[batch, 3, 224, 224]
+        ↓
+     ResNet18
+        ↓
+[batch, 1000]
+```
+
+This step now prepares the project for benchmarking how batch size affects latency, throughput, and memory usage.
+
 
 
 ## Technologies/Tools
