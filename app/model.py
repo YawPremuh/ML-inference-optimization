@@ -9,7 +9,6 @@ model.eval()
 preprocess = weights.transforms()
 categories = weights.meta["categories"]
 
-#function to run inference
 def predict_image(image: Image.Image, top_preds: int = 3):
 
     image = image.convert("RGB")

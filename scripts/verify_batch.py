@@ -11,7 +11,7 @@ weights = ResNet18_Weights.DEFAULT
 preprocess = weights.transforms()
 categories = weights.meta["categories"]
 
-#Using batch sizes 1, 4 and 8 even though theres room for up to 64
+#Using batch sizes 1, 4 and 8
 batch_sizes = [1, 4, 8]
 
 def prepare_image(image_path):
@@ -23,7 +23,6 @@ def prepare_image(image_path):
 def create_batch(input_tensor, size):
     return torch.stack([input_tensor for _ in range(size)])
 
-#function to get the top 3 predictions
 def get_top_class(output):
     probs = torch.softmax(output, dim=0)
     top_indx = torch.argmax(probs).item()
@@ -66,7 +65,6 @@ def main(image_path):
         print("PyTorch output shape:", pytorch_output.shape)
         print("ONNX output shape:", onnx_output.shape)
 
-        #Inference, inference confidence
         pytorch_class, pytorch_conf = get_top_class(pytorch_output[0])
         onnx_class, onnx_conf = get_top_class(torch.from_numpy(onnx_output[0]))
         max_diff = max_diff = abs(pytorch_conf - onnx_conf)
@@ -78,20 +76,14 @@ def main(image_path):
         print("ONNX runtime class prediction:", onnx_class,
             f"-> Confidence: {onnx_conf * 100:.4f}%")
         
-        print(f"Max output difference: {max_diff:.8f}%")
+        print(f"Max output difference: {max_diff:.8f}")
         
 
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        print(
-            "Usage: "
-            "python scripts/"
-            "verify_batches.py "
-            "<image_path>"
-        )
-
+        print("Error: \nEnter cmd in this format -> python scripts/verify_batches.py <image_path>")
         sys.exit(1)
 
     main(sys.argv[1])

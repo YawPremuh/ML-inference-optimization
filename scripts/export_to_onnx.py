@@ -33,7 +33,7 @@ def export_model():
         }
     )
 
-    onnx_program.save(onnx_path) #Save the onnx model to disk
+    onnx_program.save(onnx_path) #Save the onnx model
     print(f"The ONNX model saved to: {onnx_path}")
 
     #Export model validation
