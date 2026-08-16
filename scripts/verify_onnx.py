@@ -67,17 +67,17 @@ def main():
     print("\nPyTorch top 3 predictions:\n")
 
     for class_name, confidence in pytorch_preds:
-        print(f"Class: {class_name:<25} " f"Confidence: {confidence * 100:.4f}%")
+        print(f"Class: {class_name:<25}  Confidence: {confidence * 100:.4f}%")
 
     print("\nONNX Runtime top 3 predictions:\n")
 
     for class_name, confidence in onnx_preds:
-        print(f"Class: {class_name:<25} " f"Confidence: {confidence * 100:.4f}%")
+        print(f"Class: {class_name:<25}  Confidence: {confidence * 100:.4f}%")
 
     #Compare raw model outputs to validate equivalence between the pytorch and onnx runtime
     max_diff = torch.max(torch.abs(pytorch_output - onnx_output_tensor)).item()
 
-    print(f"\nMaximum output difference: "f"{max_diff:.8f}")
+    print(f"\nMaximum output difference: {max_diff:.8f}")
 
 
 if __name__ == "__main__":

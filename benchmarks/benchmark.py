@@ -12,7 +12,6 @@ results_path = Path("benchmarks/results/results.csv")
 
 
 def memory_mb():
-    
     #Return current process resident memory in MB
     process = psutil.Process()
     return (process.memory_info().rss/ (1024 ** 2))
@@ -20,28 +19,20 @@ def memory_mb():
 
 def calculate_metrics(latencies_ms, batch_size):
     latencies = np.array(latencies_ms)
-
     total_seconds = (latencies.sum() / 1000)
-
     total_images = (len(latencies) * batch_size)
-
     throughput = (total_images / total_seconds)
 
     return {
-        "mean_ms":
-            float(np.mean(latencies)),
+        "mean_ms": float(np.mean(latencies)),
 
-        "p50_ms":
-            float(np.percentile(latencies, 0)),
+        "p50_ms": float(np.percentile(latencies, 0)),
 
-        "p95_ms":
-            float(np.percentile(latencies, 95)),
+        "p95_ms": float(np.percentile(latencies, 95)),
 
-        "p99_ms":
-            float(np.percentile(latencies, 99)),
+        "p99_ms": float(np.percentile(latencies, 99)),
 
-        "throughput_images_sec":
-            float(throughput)
+        "throughput_images_sec": float(throughput)
     }
 
 
@@ -55,29 +46,21 @@ def benchmark_pytorch(batch, warmup_runs, measured_runs):
     model.to("cpu")
 
     input_tensor = torch.from_numpy(batch)
-
     memory_after_load = memory_mb()
 
     # Warmup
     with torch.inference_mode():
-
         for _ in range(warmup_runs):
             model(input_tensor)
 
     latencies = []
 
     with torch.inference_mode():
-
         for _ in range(measured_runs):
-
             start = (time.perf_counter_ns())
-
             model(input_tensor)
-
             end = (time.perf_counter_ns())
-
             latency_ms = ((end - start) / 1_000_000)
-
             latencies.append(latency_ms)
 
     memory_after_benchmark = (memory_mb())
@@ -90,39 +73,22 @@ def benchmark_onnx(batch, warmup_runs, measured_runs):
     import onnxruntime as ort
 
     session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-
     input_name = (session.get_inputs()[0].name)
-
     memory_after_load = memory_mb()
 
     # Warmup
     for _ in range(warmup_runs):
-
-        session.run(
-            None,
-            {
-                input_name: batch
-            }
-        )
+        session.run(None, {input_name: batch})
 
     latencies = []
 
     # Measured runs
     for _ in range(measured_runs):
-
         start = (time.perf_counter_ns())
-
-        session.run(
-            None,
-            {
-                input_name: batch
-            }
-        )
-
+        session.run(None, {input_name: batch})
         end = (time.perf_counter_ns())
 
         latency_ms = ((end - start) / 1_000_000)
-
         latencies.append(latency_ms)
 
     memory_after_benchmark = (memory_mb())
@@ -134,12 +100,7 @@ def save_result(result):
 
     file_exists = (results_path.exists())
 
-    with open(
-        results_path,
-        "a",
-        newline=""
-    ) as file:
-
+    with open(results_path, "a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=result.keys())
 
         if not file_exists:
@@ -150,45 +111,15 @@ def save_result(result):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--runtime",
-        choices=["pytorch", "onnx"],
-        required=True
-    )
-
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        choices=[1, 4, 8],
-        required=True
-    )
-
-    parser.add_argument(
-        "--warmup",
-        type=int,
-        default=20
-    )
-
-    parser.add_argument(
-        "--runs",
-        type=int,
-        default=300
-    )
+    parser.add_argument("--runtime", choices=["pytorch", "onnx"], required=True)
+    parser.add_argument("--batch-size", type=int, choices=[1, 4, 8, 32], required=True)
+    parser.add_argument("--warmup", type=int, default=20)
+    parser.add_argument("--runs", type=int, default=300)
 
     args = parser.parse_args()
 
-    # Load the exact same benchmark input.
-    base_input = np.load(
-        input_path
-    )
-
-    # Repeat the same image to construct
-    # the requested batch.
-    batch = np.repeat(
-        base_input,
-        args.batch_size,
-        axis=0
-    )
+    base_input = np.load(input_path)
+    batch = np.repeat(base_input, args.batch_size, axis=0)
 
     print(f"\nRuntime: {args.runtime}")
     print(f"Batch size: {args.batch_size}")
@@ -238,7 +169,7 @@ def main():
         "p99_ms": round(metrics["p99_ms"], 4),
         "throughput_images_sec": round(metrics["throughput_images_sec"], 2),
         "runtime_memory_mb": round(runtime_memory_delta, 2),
-        "process_memory_after_mb": round(memory_after_benchmark, 2)
+        "process_memory_after mb": round(memory_after_benchmark, 2)
     }
 
     print("Results:")
