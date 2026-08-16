@@ -18,80 +18,43 @@ def memory_mb():
     return (process.memory_info().rss/ (1024 ** 2))
 
 
-def calculate_metrics(
-    latencies_ms,
-    batch_size
-):
-    latencies = np.array(
-        latencies_ms
-    )
+def calculate_metrics(latencies_ms, batch_size):
+    latencies = np.array(latencies_ms)
 
-    total_seconds = (
-        latencies.sum()
-        / 1000
-    )
+    total_seconds = (latencies.sum() / 1000)
 
-    total_images = (
-        len(latencies)
-        * batch_size
-    )
+    total_images = (len(latencies) * batch_size)
 
-    throughput = (
-        total_images
-        / total_seconds
-    )
+    throughput = (total_images / total_seconds)
 
     return {
         "mean_ms":
             float(np.mean(latencies)),
 
         "p50_ms":
-            float(np.percentile(
-                latencies,
-                50
-            )),
+            float(np.percentile(latencies, 0)),
 
         "p95_ms":
-            float(np.percentile(
-                latencies,
-                95
-            )),
+            float(np.percentile(latencies, 95)),
 
         "p99_ms":
-            float(np.percentile(
-                latencies,
-                99
-            )),
+            float(np.percentile(latencies, 99)),
 
         "throughput_images_sec":
             float(throughput)
     }
 
 
-def benchmark_pytorch(
-    batch,
-    warmup_runs,
-    measured_runs
-):
+def benchmark_pytorch(batch, warmup_runs, measured_runs):
     import torch
-
-    from torchvision.models import (
-        resnet18,
-        ResNet18_Weights
-    )
+    from torchvision.models import resnet18, ResNet18_Weights
 
     weights = ResNet18_Weights.DEFAULT
-
-    model = resnet18(
-        weights=weights
-    )
-
+    model = resnet18(weights=weights)
     model.eval()
     model.to("cpu")
 
-    input_tensor = torch.from_numpy(
-        batch
-    )
+    input_tensor = torch.from_numpy(batch)
 
     memory_after_load = memory_mb()
 
@@ -99,68 +62,36 @@ def benchmark_pytorch(
     with torch.inference_mode():
 
         for _ in range(warmup_runs):
-            model(
-                input_tensor
-            )
+            model(input_tensor)
 
     latencies = []
 
-    # Measured runs
     with torch.inference_mode():
 
         for _ in range(measured_runs):
 
-            start = (
-                time.perf_counter_ns()
-            )
+            start = (time.perf_counter_ns())
 
-            model(
-                input_tensor
-            )
+            model(input_tensor)
 
-            end = (
-                time.perf_counter_ns()
-            )
+            end = (time.perf_counter_ns())
 
-            latency_ms = (
-                (end - start)
-                / 1_000_000
-            )
+            latency_ms = ((end - start) / 1_000_000)
 
-            latencies.append(
-                latency_ms
-            )
+            latencies.append(latency_ms)
 
-    memory_after_benchmark = (
-        memory_mb()
-    )
+    memory_after_benchmark = (memory_mb())
 
-    return (
-        latencies,
-        memory_after_load,
-        memory_after_benchmark
-    )
+    return latencies, memory_after_load, memory_after_benchmark
+    
 
 
-def benchmark_onnx(
-    batch,
-    warmup_runs,
-    measured_runs
-):
+def benchmark_onnx(batch, warmup_runs, measured_runs):
     import onnxruntime as ort
 
-    session = ort.InferenceSession(
-        str(onnx_path),
-        providers=[
-            "CPUExecutionProvider"
-        ]
-    )
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
 
-    input_name = (
-        session
-        .get_inputs()[0]
-        .name
-    )
+    input_name = (session.get_inputs()[0].name)
 
     memory_after_load = memory_mb()
 
@@ -179,9 +110,7 @@ def benchmark_onnx(
     # Measured runs
     for _ in range(measured_runs):
 
-        start = (
-            time.perf_counter_ns()
-        )
+        start = (time.perf_counter_ns())
 
         session.run(
             None,
@@ -190,41 +119,20 @@ def benchmark_onnx(
             }
         )
 
-        end = (
-            time.perf_counter_ns()
-        )
+        end = (time.perf_counter_ns())
 
-        latency_ms = (
-            (end - start)
-            / 1_000_000
-        )
+        latency_ms = ((end - start) / 1_000_000)
 
-        latencies.append(
-            latency_ms
-        )
+        latencies.append(latency_ms)
 
-    memory_after_benchmark = (
-        memory_mb()
-    )
+    memory_after_benchmark = (memory_mb())
 
-    return (
-        latencies,
-        memory_after_load,
-        memory_after_benchmark
-    )
+    return latencies, memory_after_load, memory_after_benchmark
 
+def save_result(result):
+    results_path.parent.mkdir(parents=True, exist_ok=True)
 
-def save_result(
-    result
-):
-    results_path.parent.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    file_exists = (
-        results_path.exists()
-    )
+    file_exists = (results_path.exists())
 
     with open(
         results_path,
@@ -232,39 +140,26 @@ def save_result(
         newline=""
     ) as file:
 
-        writer = csv.DictWriter(
-            file,
-            fieldnames=result.keys()
-        )
+        writer = csv.DictWriter(file, fieldnames=result.keys())
 
         if not file_exists:
             writer.writeheader()
 
-        writer.writerow(
-            result
-        )
-
+        writer.writerow(result)
 
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "--runtime",
-        choices=[
-            "pytorch",
-            "onnx"
-        ],
+        choices=["pytorch", "onnx"],
         required=True
     )
 
     parser.add_argument(
         "--batch-size",
         type=int,
-        choices=[
-            1,
-            4,
-            8
-        ],
+        choices=[1, 4, 8],
         required=True
     )
 
@@ -295,29 +190,13 @@ def main():
         axis=0
     )
 
-    print(
-        f"\nRuntime: {args.runtime}"
-    )
+    print(f"\nRuntime: {args.runtime}")
+    print(f"Batch size: {args.batch_size}")
+    print(f"Warmup runs: {args.warmup}")
+    print(f"Measured runs: {args.runs}")
+    print(f"Input shape: {batch.shape}\n")
 
-    print(
-        f"Batch size: {args.batch_size}"
-    )
-
-    print(
-        f"Warmup runs: {args.warmup}"
-    )
-
-    print(
-        f"Measured runs: {args.runs}"
-    )
-
-    print(
-        f"Input shape: {batch.shape}\n"
-    )
-
-    memory_before_runtime = (
-        memory_mb()
-    )
+    memory_before_runtime = (memory_mb())
 
     if args.runtime == "pytorch":
 
@@ -343,94 +222,33 @@ def main():
             args.runs
         )
 
-    metrics = calculate_metrics(
-        latencies,
-        args.batch_size
-    )
+    metrics = calculate_metrics(latencies, args.batch_size)
 
-    runtime_memory_delta = (
-        memory_after_load
-        - memory_before_runtime
-    )
+    runtime_memory_delta = memory_after_load - memory_before_runtime
 
     result = {
-        "runtime":
-            args.runtime,
-
-        "device":
-            "cpu",
-
-        "batch_size":
-            args.batch_size,
-
-        "warmup_runs":
-            args.warmup,
-
-        "measured_runs":
-            args.runs,
-
-        "mean_ms":
-            round(
-                metrics["mean_ms"],
-                4
-            ),
-
-        "p50_ms":
-            round(
-                metrics["p50_ms"],
-                4
-            ),
-
-        "p95_ms":
-            round(
-                metrics["p95_ms"],
-                4
-            ),
-
-        "p99_ms":
-            round(
-                metrics["p99_ms"],
-                4
-            ),
-
-        "throughput_images_sec":
-            round(
-                metrics[
-                    "throughput_images_sec"
-                ],
-                2
-            ),
-
-        "runtime_memory_mb":
-            round(
-                runtime_memory_delta,
-                2
-            ),
-
-        "process_memory_after_mb":
-            round(
-                memory_after_benchmark,
-                2
-            )
+        "runtime": args.runtime,
+        "device": "cpu",
+        "batch_size": args.batch_size,
+        "warmup_runs": args.warmup,
+        "measured_runs": args.runs,
+        "mean_ms": round(metrics["mean_ms"], 4),
+        "p50_ms": round(metrics["p50_ms"], 4),
+        "p95_ms": round(metrics["p95_ms"], 4),
+        "p99_ms": round(metrics["p99_ms"], 4),
+        "throughput_images_sec": round(metrics["throughput_images_sec"], 2),
+        "runtime_memory_mb": round(runtime_memory_delta, 2),
+        "process_memory_after_mb": round(memory_after_benchmark, 2)
     }
 
-    print(
-        "Results:"
-    )
+    print("Results:")
 
     for key, value in result.items():
-        print(
-            f"{key}: {value}"
-        )
+        print(f"{key}: {value}")
 
-    save_result(
-        result
-    )
+    save_result(result)
 
-    print(
-        f"\nSaved to: "
-        f"{results_path}"
-    )
+    print(f"\nSaved to: {results_path}")
 
 
 if __name__ == "__main__":
