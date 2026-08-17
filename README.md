@@ -149,7 +149,85 @@ for both PyTorch and ONNX Runtime.
 
 This step now prepares the project for benchmarking how batch size affects latency, throughput, and memory usage.
 
+## Step 5 - CPU Performance Benchmarking
 
+In this step, I used the same/identical preprocessed inputs to benchmark PyTorch and ONNX Runtime, comparing batch sizes 1, 4, 8 and 32 (extreme case) using latency, throughput, and memory usage.
+
+Each configuration used:
+
+- 20 warmup iterations
+- 300 measured inference iterations
+- 3 independent benchmark trials
+- Batch sizes 1, 4, 8, and 32
+- Default CPU execution/threading settings for each runtime
+
+Reported results are averages across the three trials.
+
+### Throughput Plot
+
+![Throughput vs Batch Size](benchmarks/plots/throughput_vs_batch.png)
+
+### Latency Plot
+
+![Latency vs Batch Size](benchmarks/plots/latency_vs_batch.png)
+
+### Process Memory Plot
+
+![Process Memory vs Batch Size](benchmarks/plots/memory_vs_batch.png)
+
+### Key Findings
+
+- PyTorch achieved the highest CPU throughput at batch size 8 (sweet spot),
+  reaching 113.57 images/s across the repeated benchmark tests.
+
+- When the batch. size for PyTorch increased from 1 to 4 it substantially 
+  improved throughput, while increasing from 4 to 8 produced diminishing
+  gains.
+
+- At a batch size of 32, PyTorch throughput fell to 66.21 images/s,
+  which indicated that the workload had moved beyond an efficient
+  batching region on the tested hardware(CPU).
+
+- ONNX Runtime throughput remained comparatively stable around
+  74–81 images/s as the batch size increased.
+
+- At a batch size of 32, ONNX Runtime outperformed PyTorch, achieving
+  80.81 images/s compared to PyTorch's 66.21 images/s and reducing mean 
+  batch latency from 483.42 ms to 395.98 ms.
+
+- These results demonstrate that inference runtime and batch-size
+  selection are workload and hardware dependent rather than one
+  runtime being universally faster.
+
+The benchmark was repeated across three independent test suites to reduce the impact of transient system noise and background activity.
+
+```text
+Preprocessed ResNet18 Input
+           ↓
+        Runtime
+    ┌──────┴──────┐
+    ↓             ↓
+ PyTorch      ONNX Runtime
+    ↓             ↓
+Batch Size: 1 / 4 / 8 / 32
+    ↓             ↓
+  Warmup Inference Runs
+           ↓
+  300 Measured Inference Runs
+           ↓
+ Collect Performance Metrics
+           ↓
+Mean / p50 / p95 / p99 Latency
+Throughput / Process Memory
+           ↓
+Repeat Across 3 Test Suites
+           ↓
+Aggregate Results
+           ↓
+Compare Runtime & Batch Tradeoffs
+           ↓
+Generate Benchmark Plots
+```
 
 ## Technologies/Tools
 
