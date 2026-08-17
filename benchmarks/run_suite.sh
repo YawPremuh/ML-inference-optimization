@@ -2,19 +2,19 @@
 
 set -e
 
-TEST=${1:-1}
+test=${1:-1}
 
-RESULTS_DIR="benchmarks/results"
-TEMP_RESULTS="$RESULTS_DIR/results.csv"
-FINAL_RESULTS="$RESULTS_DIR/results_test${TEST}.csv"
+results_dir="benchmarks/results"
+temp_results="$results_dir/results.csv"
+final_results="$results_dir/results_test${test}.csv"
 
 echo ""
 echo "====================================="
-echo " ML Inference Benchmark - Test $TEST"
+echo " ML Inference Benchmark - Test $test"
 echo "====================================="
 echo ""
 
-rm -f "$TEMP_RESULTS"
+rm -f "$temp_results"
 
 for runtime in pytorch onnx
 do
@@ -30,9 +30,9 @@ do
     done
 done
 
-mv "$TEMP_RESULTS" "$FINAL_RESULTS"
+mv "$temp_results" "$final_results"
 
 echo ""
-echo "Test $TEST complete."
+echo "Test $test complete."
 echo "Results saved to:"
-echo "$FINAL_RESULTS"
+echo "$final_results"

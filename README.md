@@ -1,21 +1,22 @@
 # ML Inference Optimization & Serving Platform
 
-This is an ML systems project which was done to explore how inference runtime, hardware, batch size and request load affect the performance when serving a model.
+This is an ML systems project which was done to explore how inference runtime, hardware, batch size and request load affect the performance and efficiency of machine learning inference.
 
-The purpose/goal of this project is to explore, learn and understand how to make machine learning inference faster and more efficient while measuring metrics such as latency, thoughput, and memory usage.
+The purpose/goal of this project is to explore, learn and understand how the system around a trained model influences the inference performance and deployment tradeoffs. In the process of completion I will also understand how to make machine learning inference faster and more efficient while measuring metrics such as latency, throughput, and memory usage.
 
 
 ## Project Goals
 
 This project will compare:
 
-* PyTorch vs ONNX Runtime
+* PyTorch vs ONNX Runtime inference
 * CPU vs hardware acceleration
-* Batch sizes 1, 4, and 8
+* Batch sizes 1, 4, 8 and 32 (stress case)
 * p50, p95, and p99 inference latency
 * Throughput
 * Memory usage
-* Performance under concurrent request load
+* Performance under concurrent API request load
+* Reproducible deployement using Docker
 
 ## Progress tracking
 
@@ -28,10 +29,11 @@ This project will compare:
 * [x] Export ResNet18 to ONNX
 * [x] Run inference with ONNX Runtime
 * [x] Benchmark PyTorch vs ONNX Runtime
-* [x] Test batch sizes 1, 4, and 8
-* [ ] Compare CPU and available hardware acceleration
-* [ ] Measure p50, p95, and p99 latency
-* [ ] Measure throughput and memory usage
+* [x] Vizualize benchmark
+* [x] Test batch sizes 1, 4, 8 and 32
+* [ ] Compare CPU and hardware acceleration
+* [x] Measure p50, p95, and p99 latency
+* [x] Measure throughput and memory usage
 * [ ] Load test the inference API
 * [ ] Containerize the application with Docker
 
@@ -113,7 +115,7 @@ Example response:
 
 ## Step 3 — ONNX Export and Validation
 
-In this step, I successfully exported the same ResNet18 from PyTorch to the ONNX format and run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions and, also to later compare the runtime. And now that step 3 is successful, I ask myself, which inference/execution engine can handle the same workload better than the other? At the end of this experiment/project I should be able to answer that, alongside a question about whether the performance/deployement benefit is worth all this additional complexity from exporting.
+In this step, I successfully exported the same ResNet18 from PyTorch to the ONNX format and run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions and, also to later compare the runtime. And now that step 3 is successful, the next question became; which inference/execution engine can handle the same workload better than the other? At the end of this experiment/project I should be able to answer that, alongside a question about whether the performance/deployement benefit is worth all this additional complexity from exporting.
 
 ```text
 PyTorch ResNet18
@@ -129,7 +131,7 @@ Prediction validation
 
 ## Step 4 — Dynamic Batch Size Support
 
-I updated the ONNX export to support dynamic batch sizes while I kept the image dimensions fixed at 224×224 to make the exported graph and experimental setup simple.
+I updated the ONNX export so that the first input dimension is dynamic, while I kept the image dimensions fixed at 224×224 to make the exported graph and experimental setup simple.
 
 The model was verified with batch sizes:
 
@@ -161,7 +163,20 @@ Each configuration used:
 - Batch sizes 1, 4, 8, and 32
 - Default CPU execution/threading settings for each runtime
 
-Reported results are averages across the three trials.
+Reported results are averages across the three trials. End-to-end API performance will be measured separately during load testing.
+
+### Benchmark Results
+
+| Runtime | Batch Size | Mean Latency (ms) | p95 (ms) | p99 (ms) | Throughput (images/s) |
+|---|---:|---:|---:|---:|---:|
+| PyTorch | 1 | 11.67 | 13.82 | 18.41 | 86.74 |
+| PyTorch | 4 | 35.96 | 39.58 | 44.83 | 111.35 |
+| PyTorch | 8 | 70.47 | 77.79 | 84.25 | **113.57** |
+| PyTorch | 32 | 483.42 | 584.88 | 708.03 | 66.21 |
+| ONNX Runtime | 1 | 13.66 | 14.81 | 16.87 | 74.17 |
+| ONNX Runtime | 4 | 51.89 | 62.21 | 68.83 | 77.14 |
+| ONNX Runtime | 8 | 99.70 | 103.56 | 111.02 | 80.25 |
+| ONNX Runtime | 32 | **395.98** | **423.51** | **466.84** | **80.81** |
 
 ### Throughput Plot
 
@@ -180,7 +195,7 @@ Reported results are averages across the three trials.
 - PyTorch achieved the highest CPU throughput at batch size 8 (sweet spot),
   reaching 113.57 images/s across the repeated benchmark tests.
 
-- When the batch. size for PyTorch increased from 1 to 4 it substantially 
+- When the batch size for PyTorch increased from 1 to 4 it substantially 
   improved throughput, while increasing from 4 to 8 produced diminishing
   gains.
 
@@ -199,7 +214,13 @@ Reported results are averages across the three trials.
   selection are workload and hardware dependent rather than one
   runtime being universally faster.
 
-The benchmark was repeated across three independent test suites to reduce the impact of transient system noise and background activity.
+The benchmark was repeated across three independent test suites to reduce the impact of transient system noise and background activity. Each runtime's default threading configuration was used rather than forcing identical thread counts.
+
+The experiment was made to also measure inference execution independently from preprocessing and API serving overhead. These components will be evaluated separately during load testing.
+
+Process memory measurements use resident set size (RSS), which represents the memory occupied by the Python process and runtime rather than exact model-only or peak tensor memory.
+
+Performance can also vary with operating-system scheduling, background activity, power state, and thermal conditions, which is why each benchmark configuration was repeated across three independent test suites.
 
 ```text
 Preprocessed ResNet18 Input
