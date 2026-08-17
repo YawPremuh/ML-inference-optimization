@@ -26,7 +26,7 @@ def calculate_metrics(latencies_ms, batch_size):
     return {
         "mean_ms": float(np.mean(latencies)),
 
-        "p50_ms": float(np.percentile(latencies, 0)),
+        "p50_ms": float(np.percentile(latencies, 50)),
 
         "p95_ms": float(np.percentile(latencies, 95)),
 
@@ -169,7 +169,7 @@ def main():
         "p99_ms": round(metrics["p99_ms"], 4),
         "throughput_images_sec": round(metrics["throughput_images_sec"], 2),
         "runtime_memory_mb": round(runtime_memory_delta, 2),
-        "process_memory_after mb": round(memory_after_benchmark, 2)
+        "process_memory_after_mb": round(memory_after_benchmark, 2)
     }
 
     print("Results:")
