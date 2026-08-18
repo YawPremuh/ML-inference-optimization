@@ -251,7 +251,6 @@ Generate Benchmark Plots
 ```
 
 ## Technologies/Tools
-
 * Python
 * PyTorch
 * TorchVision
@@ -261,7 +260,22 @@ Generate Benchmark Plots
 * Uvicorn
 * ONNX Runtime
 
-Additional technologies will be introduced as the project develops, including ONNX Runtime, Locust, and Docker.
+### Serving
+* FastAPI
+* Uvicorn
+
+### Benchmarking and Analysis
+* psutil
+* Pandas
+* Matplotlib
+
+### Development
+* Git
+* GitHub
+
+### Planned
+* Locust
+* Docker
 
 ## Project file structure
 
@@ -341,32 +355,60 @@ Run the inference script with a local image:
 python predict_data.py {image_path}
 ```
 
-The predict.py script loads the ResNet18 model, preprocesses the selected image, runs inference, and prints the top 3 highest-confidence predictions.
+The predict_data.py script loads the ResNet18 model, preprocesses the selected image, runs inference, and prints the top 3 highest-confidence predictions.
 
-## Planned Architecture
+## Run the API
+
+Start the FastAPI inference server:
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+The API will be available:
+```text
+http://127.0.0.1:8000
+```
+
+Interactive API documentation: 
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Available endpoints
+* GET /
+* GET /health
+* POST /predict
+
+## System Architecture
 
 ```text
-                    Image Request
-                          │
-                          ▼
-                       FastAPI
-                          │
-                     Preprocessing
-                          │
-              ┌───────────┴───────────┐
-              ▼                       ▼
-           PyTorch               ONNX Runtime
-              │                       │
-              └───────────┬───────────┘
-                          ▼
-                      Prediction
-                          │
-                          ▼
-                  Performance Metrics
-                          │
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-       Latency        Throughput        Memory
+                                             Image Request
+                              │
+                              ▼
+                           FastAPI
+                              │
+                        Preprocessing
+                              │
+                    Prepared Input Tensor
+                              │
+                  ┌───────────┴───────────┐
+                  ▼                       ▼
+               PyTorch               ONNX Runtime
+                  │                       │
+                  └───────────┬───────────┘
+                              ▼
+                          Prediction
+
+                 Benchmarking Infrastructure
+                              │
+         ┌────────────────────┼───────────────────┐
+         ▼                    ▼                   ▼
+      Latency             Throughput         Process RSS
+   mean/p50/p95/p99        images/sec           memory
+         │                    │                   │
+         └────────────────────┼───────────────────┘
+                              ▼
+                     Benchmark Analysis
 ```
 
 ## Final Objective
