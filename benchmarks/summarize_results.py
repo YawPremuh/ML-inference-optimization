@@ -13,7 +13,7 @@ Metrics = [
     "p99_ms",
     "throughput_images_sec",
     "runtime_memory_mb",
-    "process_memory_after mb",
+    "process_memory_after_mb",
 ]
 
 
@@ -88,7 +88,7 @@ def main():
                 statistics.mean(metrics["runtime_memory_mb"]), 2),
 
             "avg_process_memory_mb": round(
-                statistics.mean(metrics["process_memory_after mb"]), 2),
+                statistics.mean(metrics["process_memory_after_mb"]), 2),
         }
 
         summary_rows.append(row)
