@@ -2,7 +2,7 @@
 
 This is an ML systems project which was done to explore how inference runtime, hardware, batch size and request load affect the performance and efficiency of machine learning inference.
 
-The purpose/goal of this project is to explore, learn and understand how the system around a trained model influences the inference performance and deployment tradeoffs. In the process of completion I will also understand how to make machine learning inference faster and more efficient while measuring metrics such as latency, throughput, and memory usage.
+The purpose/goal of this project is to explore, learn and understand how the system around a trained model influences the inference performance and deployment tradeoffs. In the process of completion, I will also understand how to make machine learning inference faster and more efficient while measuring metrics such as latency, throughput, and memory usage.
 
 
 ## Project Goals
@@ -29,7 +29,7 @@ This project will compare:
 * [x] Export ResNet18 to ONNX
 * [x] Run inference with ONNX Runtime
 * [x] Benchmark PyTorch vs ONNX Runtime
-* [x] Vizualize benchmark
+* [x] Visualize benchmark
 * [x] Test batch sizes 1, 4, 8 and 32
 * [ ] Compare CPU and hardware acceleration
 * [x] Measure p50, p95, and p99 latency
@@ -115,7 +115,7 @@ Example response:
 
 ## Step 3 — ONNX Export and Validation
 
-In this step, I successfully exported the same ResNet18 from PyTorch to the ONNX format and run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions and, also to later compare the runtime. And now that step 3 is successful, the next question became; which inference/execution engine can handle the same workload better than the other? At the end of this experiment/project I should be able to answer that, alongside a question about whether the performance/deployement benefit is worth all this additional complexity from exporting.
+In this step, I successfully exported the same ResNet18 from PyTorch to the ONNX format and run ONNX Runtime inference. Then, I validated the exported model using the ONNX model checker. I wrote a script to run both PyTorch and ONNX Runtime inference and, compared the results using the same preprocessed inputs to verify that the exported model actually gives me the same predictions and, also to later compare the runtime. And now that step 3 is successful, the next question became; which inference/execution engine can handle the same workload better than the other? At the end of this experiment/project I should be able to answer that, alongside a question about whether the performance/deployment benefit is worth all this additional complexity from exporting.
 
 ```text
 PyTorch ResNet18
