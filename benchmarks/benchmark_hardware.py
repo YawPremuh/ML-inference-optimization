@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torchvision.models import resnet18, ResNet18_Weights
+import csv
 
 input_path = Path("benchmarks/input.npy")
 
@@ -63,6 +64,20 @@ def benchmark(device_name, batch_size, warmup_runs, measured_runs):
 
     return calculate_metrics(latencies, batch_size)
 
+def save_result(output_path, result):
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    file_exists = output_path.exists()
+
+    with open(output_path, "a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=result.keys())
+
+        if not file_exists:
+            writer.writeheader()
+
+        writer.writerow(result)
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -91,6 +106,18 @@ def main():
         default=300
     )
 
+    parser.add_argument(
+        "--test",
+        type=int,
+        required=True
+    )
+
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True
+    )
+
     args = parser.parse_args()
 
     if (args.device == "mps" and not torch.backends.mps.is_available()):
@@ -108,12 +135,29 @@ def main():
         args.runs,
     )
 
+    result = {
+    "test": args.test,
+    "device": args.device,
+    "batch_size": args.batch_size,
+    "warmup_runs": args.warmup,
+    "measured_runs": args.runs,
+    "mean_ms": round(metrics["mean_ms"], 4),
+    "p50_ms": round(metrics["p50_ms"], 4),
+    "p95_ms": round(metrics["p95_ms"], 4),
+    "p99_ms": round(metrics["p99_ms"], 4),
+    "throughput_images_sec": round(metrics["throughput"], 2)
+}
+
     print("\nResults:")
     print(f"mean_ms: {metrics['mean_ms']:.4f}")
     print(f"p50_ms: {metrics['p50_ms']:.4f}")
     print(f"p95_ms: {metrics['p95_ms']:.4f}")
     print(f"p99_ms: {metrics['p99_ms']:.4f}")
     print(f"throughput_images_sec: {metrics['throughput']:.2f}")
+
+    save_result(args.output, result)
+
+    print(f"\nSaved to: {args.output}")
 
 if __name__ == "__main__":
     main()
