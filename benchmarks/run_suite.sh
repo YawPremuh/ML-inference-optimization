@@ -21,7 +21,7 @@ final_results="$results_dir/results_test${test_number}.csv"
 mkdir -p "$results_dir"
 
 if [[ -e "$final_results" ]]; then
-    echo "Error: $final_results already exists; choose another test number." >&2
+    echo "Error: Test $final_results already exists; choose another test number." >&2
     exit 1
 fi
 
