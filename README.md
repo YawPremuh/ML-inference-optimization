@@ -270,7 +270,25 @@ ML_inf_and_serving/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py
-│   └──model.py
+│   └── model.py
+│
+├── benchmarks/
+│   ├── benchmark.py
+│   ├── prepare_input.py
+│   ├── run_suite.sh
+│   ├── summarize_results.py
+│   ├── plot_results.py
+│   │
+│   ├── results/
+│   │   ├── results_test1.csv
+│   │   ├── results_test2.csv
+│   │   ├── results_test3.csv
+│   │   └── summary.csv
+│   │
+│   └── plots/
+│       ├── throughput_vs_batch.png
+│       ├── latency_vs_batch.png
+│       └── memory_vs_batch.png
 │
 ├── images/
 │   ├── ball.jpg
@@ -283,7 +301,9 @@ ML_inf_and_serving/
 │
 ├── scripts/
 │   ├── export_to_onnx.py
-│   └── verify_onnx.py
+│   ├── verify_onnx.py
+│   ├── onnx_shape.py
+│   └── verify_batch.py
 │
 ├── predict_data.py
 ├── requirements.txt
