@@ -310,6 +310,65 @@ The initial hardware benchmark measured device-resident inference which means bo
 
 The absolute device-placement cost increased with batch size particularly because larger tensors were involved, but the placement cost represented a smaller percentage of total execution time as the workload grew. This demonstrated another form of amortization, where the accelerator setup and placement overhead becomes less significant relative to useful computation for larger workloads.
 
+## Step 7 — End-to-End API Load Testing
+
+After I benchmarked model execution directly, I evaluated how the FastAPI inference service behaved under concurrent request load. In this step, Locust was used to repeatedly send multipart image requests to the `/predict` endpoint using the same input image for every test.
+
+The baseline serving configuration used:
+
+- 1 Uvicorn worker
+- PyTorch CPU inference
+- ResNet18
+- Same input image across all tests
+- 30/60-second test duration
+- Zero simulated user think time
+- Concurrent user levels of 1, 5, 10, and 25
+
+Unlike the model-only benchmarks, the measurements in this step include the complete request path:
+
+- HTTP request handling
+- Multipart file parsing
+- Image decoding
+- Preprocessing
+- Model inference
+- Postprocessing
+- JSON serialization
+- HTTP response delivery
+
+### Load Test Results
+
+| Concurrent Users | Avg Latency (ms) | p95 (ms) | p99 (ms) | Throughput (req/s) | Failures |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 16.19 | 19 | 26 | 61.65 | 0 |
+| 5 | 73.73 | 78 | 89 | 67.59 | 0 |
+| 10 | 152.83 | 180 | 240 | 65.23 | 0 |
+| 25 | 368.88 | 380 | 420 | 67.50 | 0 |
+
+### Throughput Under Load
+
+![API Throughput vs Concurrent Users](load_tests/plots/throughput_vs_users.png)
+
+### Latency Under Load
+
+![API Latency vs Concurrent Users](load_tests/plots/latency_vs_users.png)
+
+### Key Findings
+
+- Throughput increased only by a bit from about 62 requests/sec at one user to about 68 requests/sec at five users.
+
+- Increasing the concurrency beyond five users did not produce meaningful addition to the throughput. The service remained near approximately 65–68 requests/sec.
+
+- Average latency increased substantially as the concurrency also increased:
+  - 16.19 ms at 1 user
+  - 73.73 ms at 5 users
+  - 152.83 ms at 10 users
+  - 368.88 ms at 25 users
+
+- This indicates that the single-worker CPU serving configuration reached its effective capacity region quickly. Additional concurrency primarily increased waiting and queueing rather than completed request throughput.
+
+- None of the requests failed during any of the tested concurrency levels, so overload manifested as increased latency rather than errors or crashes.
+
+- These results demonstrate why model-only inference latency is not sufficient for evaluating a deployed ML service: client-visible performance depends on the complete request pipeline and behavior under concurrent load.
 
 ## Technologies/Tools
 * Python
