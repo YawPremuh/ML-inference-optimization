@@ -31,7 +31,7 @@ This project will compare:
 * [x] Benchmark PyTorch vs ONNX Runtime
 * [x] Visualize benchmark
 * [x] Test batch sizes 1, 4, 8 and 32
-* [ ] Compare CPU and hardware acceleration
+* [x] Compare CPU and hardware acceleration
 * [x] Measure p50, p95, and p99 latency
 * [x] Measure throughput and memory usage
 * [ ] Load test the inference API
@@ -249,6 +249,67 @@ Compare Runtime & Batch Tradeoffs
            ↓
 Generate Benchmark Plots
 ```
+## Step 6 — Hardware-Aware Inference
+
+After benchmarking PyTorch and ONNX Runtime on CPU, I investigated how the underlying hardware affected inference performance. But this time, I kept; the model, PyTorch runtime, input data, batch sizes, warmup count, and number of measured runs constant while changing only the execution device:
+
+- CPU
+- Apple MPS GPU acceleration
+
+MPS operations were explicitly synchronized during benchmarking so that the measured latency represented completed accelerator execution rather than asynchronous command submission.
+
+Each hardware configuration used:
+
+- 20 warmup iterations
+- 300 measured inference iterations
+- 3 independent benchmark tests
+- Batch sizes 1, 4, 8, and 32
+
+### Hardware Benchmark Results
+
+| Batch Size | CPU Mean (ms) | MPS Mean (ms) | CPU Throughput (img/s) | MPS Throughput (img/s) | MPS Speedup |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 10.66 | 3.32 | 93.81 | 301.63 | 3.21× |
+| 4 | 35.36 | 9.12 | 113.12 | 438.89 | 3.88× |
+| 8 | 74.08 | 16.84 | 109.06 | 475.28 | 4.40× |
+| 32 | 466.00 | 64.05 | 68.67 | 499.59 | 7.28× |
+
+### CPU vs MPS Throughput
+
+![CPU vs MPS Throughput](benchmarks/plots/cpu_vs_mps_throughput.png)
+
+### CPU vs MPS Latency
+
+![CPU vs MPS Latency](benchmarks/plots/cpu_vs_mps_latency.png)
+
+### Key Findings
+
+- MPS(GPU) significantly outperformed CPU inference across every tested batch size.
+
+- The MPS(GPU) speedup increased as the batch size grew, from about **3.2× at batch size 1** to about **7.3× at batch size 32**.
+
+- CPU throughput improved initially, where it reached about **113 images/s at batch size 4**, before declining as larger batches pushed the workload beyond an efficient CPU operating region.
+
+- MPS(GPU) scaled much better with increasing batch size, rising from about **302 images/s at batch size 1** to about **500 images/s at batch size 32**.
+
+- MPS(GPU) also showed diminishing returns. Batch size 8 achieved about **475 images/s**, while batch size 32 achieved about **500 images/s**. The larger batch increased throughput by only about 5% while increasing mean batch latency from **16.84 ms to 64.05 ms**.
+
+- For this workload, batch size 8 therefore provided a more balanced MPS(GPU) latency-throughput operating point than batch size 32.
+
+- The widening CPU-to-MPS(GPU) speedup at large batches was caused by both stronger accelerator scaling and degrading CPU performance, rather than the accelerator alone becoming proportionally faster.
+
+### Device Placement Overhead
+
+The initial hardware benchmark measured device-resident inference which means both the model and input tensor were moved to MPS before timing started. To estimate the practical cost of accelerator device placement, I also compared device-resident inference with a second benchmark that moved the preprocessed CPU tensor to MPS(GPU) inside the timed region.
+
+| Batch Size | MPS Inference Only | Transfer + Inference | Added Latency | Relative Overhead |
+|---:|---:|---:|---:|---:|
+| 1 | 3.30 ms | 3.49 ms | 0.19 ms | ~5.9% |
+| 8 | 16.68 ms | 17.23 ms | 0.55 ms | ~3.3% |
+| 32 | 64.85 ms | 65.77 ms | 0.92 ms | ~1.4% |
+
+The absolute device-placement cost increased with batch size particularly because larger tensors were involved, but the placement cost represented a smaller percentage of total execution time as the workload grew. This demonstrated another form of amortization, where the accelerator setup and placement overhead becomes less significant relative to useful computation for larger workloads.
+
 
 ## Technologies/Tools
 * Python
@@ -259,6 +320,7 @@ Generate Benchmark Plots
 * FastAPI
 * Uvicorn
 * ONNX Runtime
+* APPLE MPS(GPU)
 
 ### Serving
 * FastAPI
@@ -288,21 +350,32 @@ ML_inf_and_serving/
 │
 ├── benchmarks/
 │   ├── benchmark.py
+│   ├── benchmark_hardware.py
+│   ├── benchmark_transfer.py
 │   ├── prepare_input.py
 │   ├── run_suite.sh
+│   ├── run_hardware_suite.sh
 │   ├── summarize_results.py
+│   ├── summarize_hardware.py
 │   ├── plot_results.py
+│   ├── plot_hardware.py
 │   │
 │   ├── results/
 │   │   ├── results_test1.csv
 │   │   ├── results_test2.csv
 │   │   ├── results_test3.csv
-│   │   └── summary.csv
+│   │   ├── summary.csv
+│   │   ├── hardware_test1.csv
+│   │   ├── hardware_test2.csv
+│   │   ├── hardware_test3.csv
+│   │   └── hardware_summary.csv
 │   │
 │   └── plots/
 │       ├── throughput_vs_batch.png
 │       ├── latency_vs_batch.png
-│       └── memory_vs_batch.png
+│       ├── memory_vs_batch.png
+│       ├── cpu_vs_mps_throughput.png
+│       └── cpu_vs_mps_latency.png 
 │
 ├── images/
 │   ├── ball.jpg
