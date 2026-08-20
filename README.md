@@ -18,25 +18,6 @@ This project will compare:
 * Performance under concurrent API request load
 * Reproducible deployement using Docker
 
-## Progress tracking
-
-* [x] Set up Python virtual environment
-* [x] Load pretrained ResNet18 with PyTorch
-* [x] Preprocess local images for inference
-* [x] Run image classification inference
-* [x] Return top model predictions and confidence scores
-* [x] Serve the model using FastAPI
-* [x] Export ResNet18 to ONNX
-* [x] Run inference with ONNX Runtime
-* [x] Benchmark PyTorch vs ONNX Runtime
-* [x] Visualize benchmark
-* [x] Test batch sizes 1, 4, 8 and 32
-* [x] Compare CPU and hardware acceleration
-* [x] Measure p50, p95, and p99 latency
-* [x] Measure throughput and memory usage
-* [ ] Load test the inference API
-* [ ] Containerize the application with Docker
-
 ## Step 1 — PyTorch Inference
 
 My first step was to use a pretrained ResNet model, specifically ResNet18, from TorchVision. I used this model because the purpose of my project is not to build a new AI model from scratch, but to test how fast and efficiently a model can run. ResNet18 is small enough to run on my computer and complex enough to give me valuable performance results.
@@ -369,6 +350,67 @@ Unlike the model-only benchmarks, the measurements in this step include the comp
 - None of the requests failed during any of the tested concurrency levels, so overload manifested as increased latency rather than errors or crashes.
 
 - These results demonstrate why model-only inference latency is not sufficient for evaluating a deployed ML service: client-visible performance depends on the complete request pipeline and behavior under concurrent load.
+
+## Step 8 — Containerized Deployment
+
+For this step, the FastAPI inference service was containerized with Docker to provide a reproducible runtime independent of my local Python virtual environment.
+
+The container includes only the dependencies required to serve the model:
+
+- Python 3.12
+- FastAPI
+- Uvicorn
+- PyTorch
+- TorchVision
+- Pillow
+- python-multipart
+
+Some development and benchmarking dependencies such as Locust, ONNX Runtime, Pandas, and Matplotlib were not included in the serving image.
+
+### Model Packaging
+
+The pretrained ResNet18 weights are downloaded during the Docker image build rather than during container startup. This is to ensure that a newly started container can load the model without requiring a model download at runtime. The deployment image was scanned using Docker Scout.
+
+The pretrained ResNet18 weights are downloaded during the Docker image build:
+
+```dockerfile
+RUN python -c \
+    "from torchvision.models import resnet18, ResNet18_Weights; resnet18(weights=ResNet18_Weights.DEFAULT)"
+```
+
+### Build
+
+```bash
+docker build \
+    --pull \
+    -t ml-inference-platform:step8 \
+    .
+```
+
+### Run
+
+```bash
+docker run \
+    --rm \
+    --name ml-inference-api \
+    -p 127.0.0.1:8000:8000 \
+    ml-inference-platform:step8
+```
+
+### API Validation
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+### Inference Endpoint
+
+```bash
+curl \
+    -X POST \
+    -F "file=@images/dog2.jpg" \
+    http://127.0.0.1:8000/predict
+```
 
 ## Technologies/Tools
 * Python

@@ -1,0 +1,6 @@
+fastapi==0.141.1
+pillow==12.3.0
+python-multipart==0.0.32
+uvicorn==0.52.1
+msgpack==1.2.1
+setuptools==83.0.0
