@@ -4,10 +4,13 @@ This is an ML systems project which was done to explore how inference runtime, h
 
 The purpose/goal of this project is to explore, learn and understand how the system around a trained model influences the inference performance and deployment tradeoffs. In the process of completion, I will also understand how to make machine learning inference faster and more efficient while measuring metrics such as latency, throughput, and memory usage.
 
+The final project experimentally answered:
+
+> How can ML inference be made faster and more efficient under real request load? In other words, given the same trained ML model, how does the system around the model affect performance?
 
 ## Project Goals
 
-This project will compare:
+This project evaluates:
 
 * PyTorch vs ONNX Runtime inference
 * CPU vs hardware acceleration
@@ -17,6 +20,58 @@ This project will compare:
 * Memory usage
 * Performance under concurrent API request load
 * Reproducible deployement using Docker
+
+## System Architecture
+
+```text
+                         Inference Serving Path
+
+                              Image Request
+                                   │
+                                   ▼
+                                FastAPI
+                                   │
+                                   ▼
+                              Preprocessing
+                                   │
+                                   ▼
+                           Prepared Input Tensor
+                                   │
+                                   ▼
+                                PyTorch
+                                   │
+                                   ▼
+                              Prediction
+                                   │
+                                   ▼
+                              JSON Response
+
+
+                         Benchmarking Pipeline
+
+                           Prepared Input Tensor
+                                   │
+                 ┌─────────────────┼─────────────────┐
+                 ▼                                   ▼
+              PyTorch                           ONNX Runtime
+                 │                                   │
+          ┌──────┴──────┐                            │
+          ▼             ▼                            ▼
+         CPU           MPS                          CPU
+          │             │                            │
+          └─────────────┴────────────┬───────────────┘
+                                     ▼
+                         Performance Measurements
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+              ▼                      ▼                      ▼
+           Latency               Throughput            Process RSS
+       mean/p50/p95/p99           images/sec              memory
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     ▼
+                              Benchmark Analysis
+```
 
 ## Step 1 — PyTorch Inference
 
@@ -383,7 +438,7 @@ RUN python -c \
 ```bash
 docker build \
     --pull \
-    -t ml-inference-platform:step8 \
+    -t ml-inference-platform:step8-final \
     .
 ```
 
@@ -394,7 +449,7 @@ docker run \
     --rm \
     --name ml-inference-api \
     -p 127.0.0.1:8000:8000 \
-    ml-inference-platform:step8
+    ml-inference-platform:step8-final
 ```
 
 ### API Validation
@@ -410,93 +465,6 @@ curl \
     -X POST \
     -F "file=@images/dog2.jpg" \
     http://127.0.0.1:8000/predict
-```
-
-## Technologies/Tools
-* Python
-* PyTorch
-* TorchVision
-* Pillow
-* Git / GitHub
-* FastAPI
-* Uvicorn
-* ONNX Runtime
-* APPLE MPS(GPU)
-
-### Serving
-* FastAPI
-* Uvicorn
-
-### Benchmarking and Analysis
-* psutil
-* Pandas
-* Matplotlib
-
-### Development
-* Git
-* GitHub
-
-### Planned
-* Locust
-* Docker
-
-## Project file structure
-
-```text
-ML_inf_and_serving/
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   └── model.py
-│
-├── benchmarks/
-│   ├── benchmark.py
-│   ├── benchmark_hardware.py
-│   ├── benchmark_transfer.py
-│   ├── prepare_input.py
-│   ├── run_suite.sh
-│   ├── run_hardware_suite.sh
-│   ├── summarize_results.py
-│   ├── summarize_hardware.py
-│   ├── plot_results.py
-│   ├── plot_hardware.py
-│   │
-│   ├── results/
-│   │   ├── results_test1.csv
-│   │   ├── results_test2.csv
-│   │   ├── results_test3.csv
-│   │   ├── summary.csv
-│   │   ├── hardware_test1.csv
-│   │   ├── hardware_test2.csv
-│   │   ├── hardware_test3.csv
-│   │   └── hardware_summary.csv
-│   │
-│   └── plots/
-│       ├── throughput_vs_batch.png
-│       ├── latency_vs_batch.png
-│       ├── memory_vs_batch.png
-│       ├── cpu_vs_mps_throughput.png
-│       └── cpu_vs_mps_latency.png 
-│
-├── images/
-│   ├── ball.jpg
-│   ├── car.jpeg
-│   ├── dog.jpg
-│   └── dog2.jpg
-│
-├── models/
-│   └── .gitkeep
-│
-├── scripts/
-│   ├── export_to_onnx.py
-│   ├── verify_onnx.py
-│   ├── onnx_shape.py
-│   └── verify_batch.py
-│
-├── predict_data.py
-├── requirements.txt
-├── .gitignore
-└── README.md
 ```
 
 ## Setup
@@ -518,7 +486,8 @@ source .venv/bin/activate
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
 ## Run Inference
@@ -553,42 +522,182 @@ http://127.0.0.1:8000/docs
 * GET /health
 * POST /predict
 
-## System Architecture
-
-```text
-                                             Image Request
-                              │
-                              ▼
-                           FastAPI
-                              │
-                        Preprocessing
-                              │
-                    Prepared Input Tensor
-                              │
-                  ┌───────────┴───────────┐
-                  ▼                       ▼
-               PyTorch               ONNX Runtime
-                  │                       │
-                  └───────────┬───────────┘
-                              ▼
-                          Prediction
-
-                 Benchmarking Infrastructure
-                              │
-         ┌────────────────────┼───────────────────┐
-         ▼                    ▼                   ▼
-      Latency             Throughput         Process RSS
-   mean/p50/p95/p99        images/sec           memory
-         │                    │                   │
-         └────────────────────┼───────────────────┘
-                              ▼
-                     Benchmark Analysis
+## Export ONNX Model
+```bash
+python scripts/export_to_onnx.py
 ```
 
-## Final Objective
+## Validate ONNX export
+```bash
+python scripts/verify_onnx.py
+python scripts/verify_batch.py
+```
 
-The final project will experimentally answer:
+## Run CPU Runtime Benchmarks
+```bash
+bash benchmarks/run_suite.sh
+```
 
-> How can ML inference be made faster and more efficient under real request load? In other words, given the same trained ML model, how does the system around the model affect performance?
+Generate summary:
+```bash
+python benchmarks/summarize_results.py
+```
 
-The conclusions to this question will be based on measured benchmark results rather than assumed performance improvements.
+Generate plots:
+```bash
+python benchmarks/plot_results.py
+```
+
+## Run CPU vs MPS(GPU) Benchmarks
+```bash
+bash benchmarks/run_hardware_suite.sh
+```
+
+Generate summary:
+```bash
+python benchmarks/summarize_hardware.py
+```
+
+Generate plots:
+```bash
+python benchmarks/plot_hardware.py
+```
+
+## Run Load Tests
+```bash
+locust \
+    -f load_tests/locustfile.py \
+    --host http://127.0.0.1:8000 \
+    --image images/dog2.jpg
+```
+
+## Technologies/Tools
+* Python
+* PyTorch
+* TorchVision
+* Pillow
+* Git / GitHub
+* FastAPI
+* Uvicorn
+* ONNX Runtime
+* APPLE MPS(GPU)
+
+### Serving
+* FastAPI
+* Uvicorn
+
+### Benchmarking and Analysis
+* psutil
+* Pandas
+* Matplotlib
+* Locust
+
+### Development
+* Git
+* GitHub
+
+### Deployment
+* Docker
+* Docker Scout
+* Linux
+
+## Project file structure
+
+```text
+ML-inference-optimization/
+│
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   └── model.py
+│
+├── benchmarks/
+│   ├── benchmark.py
+│   ├── benchmark_hardware.py
+│   ├── benchmark_transfer.py
+│   ├── prepare_input.py
+│   ├── run_suite.sh
+│   ├── run_hardware_suite.sh
+│   ├── summarize_results.py
+│   ├── summarize_hardware.py
+│   ├── plot_results.py
+│   ├── plot_hardware.py
+│   │
+│   ├── results/
+│   │   ├── summary.csv
+│   │   ├── hardware_summary.csv
+│   │   ├── results_test1.csv
+│   │   ├── results_test2.csv
+│   │   ├── results_test3.csv
+│   │   ├── hardware_test1.csv
+│   │   ├── hardware_test2.csv
+│   │   └── hardware_test3.csv
+│   │
+│   └── plots/
+│       ├── latency_vs_batch.png
+│       ├── throughput_vs_batch.png
+│       ├── memory_vs_batch.png
+│       ├── cpu_vs_mps_latency.png
+│       └── cpu_vs_mps_throughput.png
+│
+├── load_tests/
+│   ├── locustfile.py
+│   ├── summarize_load.py
+│   ├── plot_load.py
+│   │
+│   ├── results/
+│   │   ├── load_summary.csv
+│   │   ├── users_1_stats.csv
+│   │   ├── users_5_stats.csv
+│   │   ├── users_10_stats.csv
+│   │   └── users_25_stats.csv
+│   │
+│   └── plots/
+│       ├── latency_vs_users.png
+│       └── throughput_vs_users.png
+│
+├── scripts/
+│   ├── export_to_onnx.py
+│   ├── verify_onnx.py
+│   ├── verify_batch.py
+│   └── onnx_shape.py
+│
+├── images/
+│   ├── ball.jpg
+│   ├── car.jpeg
+│   ├── dog.jpg
+│   ├── dog2.jpg
+│   └── dog_bluejay.jpeg
+│
+├── models/
+│   └── .gitkeep
+│
+├── predict_data.py
+├── Dockerfile
+├── requirements.txt
+├── requirements-api.txt
+├── .dockerignore
+├── .gitignore
+└── README.md
+```
+
+## Conclusion
+
+This project was completed to demonstrate that ML inference performance is determined by the interaction between the model and the system executing it.
+
+The same ResNet18 model showed a different behavior depending on:
+* runtime
+* hardware
+* batch size
+* request concurrency
+* deployment environment
+
+The experiments done showed that:
+- optimization choices must be benchmarked rather than making assumptions
+- larger batches can improve throughput but increase latency
+- accelerator performance improves when sufficient parallel work is available
+- services can become latency-bound after reaching a throughput ceiling
+- container dependency choices affect both image size and security
+- correctness validation must come before performance optimization
+
+The result is an end-to-end ML inference/serving platform that covers model execution, runtime optimization, hardware-aware benchmarking, API serving, load testing, containerization, and deployment security.
